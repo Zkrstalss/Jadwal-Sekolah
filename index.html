@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SISWAKU — Portal Siswa Digital</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🎓</div>
+      <div>
+        <div class="sb-brand-name">SISWAKU</div>
+        <div class="sb-brand-sub">PORTAL SISWA</div>
+      </div>
+    </div>
+    <div class="sb-kelas">
+      <div class="sb-kelas-dot"></div>
+      <span>X PPLG 2</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-item active" onclick="goTo('dashboard')" data-page="dashboard">
+        <span class="nav-icon">⊞</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="goTo('jadwal')" data-page="jadwal">
+        <span class="nav-icon">📅</span><span>Jadwal Kelas</span>
+      </div>
+      <div class="nav-item" onclick="goTo('pengumuman')" data-page="pengumuman">
+        <span class="nav-icon">📢</span><span>Pengumuman</span>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-avatar">IPA</div>
+      <div>
+        <div class="sb-user-name">X PPLG 2</div>
+        <div class="sb-user-role">TA 2024/2025</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <div class="breadcrumb">SISWAKU › <strong id="page-title">Dashboard</strong></div>
+      </div>
+      <div class="topbar-right"><b id="topbar-date">—</b></div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div>
+            <h1>Selamat Datang 👋</h1>
+            <p>Kelas X PPLG 2 · TA 2024/2025</p>
+          </div>
+        </div>
+
+        <!-- 3 stat cards -->
+        <div class="stats-row">
+          <div class="stat-card blue" onclick="goTo('jadwal')">
+            <span class="stat-icon">📅</span>
+            <div class="stat-label">Jadwal Hari Ini</div>
+            <div class="stat-val" id="sc-jadwal">—</div>
+            <div class="stat-sub" id="sc-jadwal-sub">—</div>
+          </div>
+          <div class="stat-card green" onclick="goTo('pengumuman')">
+            <span class="stat-icon">📢</span>
+            <div class="stat-label">Pengumuman</div>
+            <div class="stat-val" id="sc-ann">—</div>
+            <div class="stat-sub" id="sc-ann-sub">—</div>
+          </div>
+          <div class="stat-card purple">
+            <span class="stat-icon">📚</span>
+            <div class="stat-label">Mata Pelajaran</div>
+            <div class="stat-val" id="sc-mapel">—</div>
+            <div class="stat-sub">Semester ini</div>
+          </div>
+        </div>
+
+        <!-- Jadwal & Pengumuman preview -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="two-col">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">📅 Jadwal Hari Ini</div>
+              <span class="badge badge-blue" id="dash-hari">—</span>
+            </div>
+            <div id="dash-jadwal-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">📢 Pengumuman Terbaru</div>
+              <button class="btn btn-ghost btn-sm" onclick="goTo('pengumuman')">Lihat Semua</button>
+            </div>
+            <div id="dash-ann-list"></div>
+          </div>
+        </div>
+
+        <!-- Statistik ringkas (4 kotak) -->
+        <div class="card">
+          <div class="card-title">📊 Statistik Kelas</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px" id="stat-ringkasan"></div>
+        </div>
+      </div>
+
+      <!-- ══ JADWAL ══ -->
+      <div class="page" id="page-jadwal">
+        <div class="page-head">
+          <div><h1>📅 Jadwal Kelas</h1><p>Jadwal pelajaran mingguan X PPLG 2</p></div>
+          <div id="jadwal-filter" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div id="jadwal-container"></div>
+      </div>
+
+      <!-- ══ PENGUMUMAN ══ -->
+      <div class="page" id="page-pengumuman">
+        <div class="page-head">
+          <div><h1>📢 Pengumuman Kelas</h1><p>Forum informasi dan pengumuman</p></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge badge-blue" id="ann-count">0 post</span>
+            <button class="btn btn-primary" onclick="openModal('modal-ann')">+ Buat Pengumuman</button>
+          </div>
+        </div>
+        <div id="ann-list"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL PENGUMUMAN -->
+<div class="modal-bg" id="modal-ann">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Buat Pengumuman</div>
+      <button class="modal-close" onclick="closeModal('modal-ann')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Judul</label>
+      <input class="form-input" id="inp-ann-judul" placeholder="Judul pengumuman...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Isi Pengumuman</label>
+      <textarea class="form-input" id="inp-ann-isi" placeholder="Tulis pengumuman di sini..."></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <input type="checkbox" id="chk-pin" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent)">
+      <label for="chk-pin" style="font-size:12px;color:var(--text2);cursor:pointer">📌 Pin pengumuman ini</label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ann')">Batal</button>
+      <button class="btn btn-primary" onclick="postAnn()">Post Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="main.js"></script>
+</body>
+</html>
