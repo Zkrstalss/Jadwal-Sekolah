@@ -1,5 +1,5 @@
 // ─── DATA ───
-const KELAS = {nama:'XII IPA 1', tahun:'2024/2025'};
+const KELAS = {nama:'X PPLG 2', tahun:'2025/2026'};
 const SEED_JADWAL = [
   {id:1,hari:'Senin',mulai:'07:00',selesai:'11:00',mapel:'Produktif PPLG',guru:'Pak Iwan',ruang:'R.Lab'},
   {id:2,hari:'Senin',mulai:'11:00',selesai:'11:45',mapel:'BK/BP',guru:'Pak Qohar',ruang:'Kelas Bawah'},
@@ -21,6 +21,8 @@ const SEED_JADWAL = [
   {id:18,hari:'Jumat',mulai:'07:00',selesai:'09:30',mapel:'Produktif PPLG',guru:'Pak Agung',ruang:'Ruang Tefa Bawah'},
   {id:19,hari:'Jumat',mulai:'10:30',selesai:'14:00',mapel:'IPAS',guru:'Bu Kasih',ruang:'Kelas Bawah'},
 ];
+
+const SEED_ANN = [];
 
 function ls(key, val) {
   if (val === undefined) { try { return JSON.parse(localStorage.getItem('siswaku_'+key)); } catch { return null; } }
@@ -117,7 +119,7 @@ function renderDashboard(){
     ? `<div class="empty" style="padding:24px 0"><div class="ei">📭</div><p>Belum ada pengumuman</p></div>`
     : annList.map(a=>`
         <div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--surface2);border-radius:9px;margin-bottom:7px;border:1px solid var(--border);cursor:pointer" onclick="goTo('pengumuman')">
-          <div class="ann-ava ${a.isGuru?'guru':''}" style="width:32px;height:32px;font-size:11px;border-radius:8px;flex-shrink:0">${initials(a.nama)}</div>
+          <div class="ann-ava" style="width:32px;height:32px;font-size:11px;border-radius:8px;flex-shrink:0">${initials(a.nama)}</div>
           <div style="flex:1;min-width:0">
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:2px">
               ${a.pinned?'<span class="badge badge-yellow">📌</span>':''}
@@ -204,7 +206,7 @@ function renderPengumuman(){
   el.innerHTML=pengumuman.map(a=>`
     <div class="ann-card ${a.pinned?'pinned':''}" id="ann-${a.id}">
       <div class="ann-top">
-        <div class="ann-ava ${a.isGuru?'guru':''}">${initials(a.nama)}</div>
+        <div class="ann-ava">${initials(a.nama)}</div>
         <div style="flex:1">
           <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:3px">
             ${a.pinned?'<span class="badge badge-yellow">📌 Pinned</span>':''}
@@ -229,8 +231,7 @@ function postAnn(){
   if(!judul||!isi){toast('Judul dan isi wajib diisi','error');return;}
   const list=ls('pengumuman')||[];
   const newId=Math.max(0,...list.map(p=>p.id))+1;
-  list.unshift({id:newId,nama:'Saya',isGuru:false,judul,isi,pinned,waktu:new Date().toISOString()});
-  ls('pengumuman',list);
+list.unshift({id:newId,nama:'Saya',judul,isi,pinned,waktu:new Date().toISOString()});  ls('pengumuman',list);
   document.getElementById('inp-ann-judul').value='';
   document.getElementById('inp-ann-isi').value='';
   document.getElementById('chk-pin').checked=false;
