@@ -129,20 +129,130 @@ function renderDashboard(){
           </div>
         </div>`).join('');
 
-  // Statistik ringkas — 4 kotak
-  const hariAktif = [...new Set(jadwal.map(j=>j.hari))].length;
-  const guruUnik  = [...new Set(jadwal.map(j=>j.guru))].length;
-  document.getElementById('stat-ringkasan').innerHTML = [
-    {icon:'👥',label:'Total Siswa',   val:MURID.length,  color:'var(--accent2)'},
-    {icon:'📚',label:'Mata Pelajaran',val:mapelUnik,      color:'var(--green)'},
-    {icon:'📅',label:'Hari Aktif',    val:hariAktif,      color:'var(--yellow)'},
-    {icon:'👨‍🏫',label:'Guru Pengajar', val:guruUnik,       color:'var(--purple)'},
-  ].map(r=>`
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
-      <div style="font-size:22px;margin-bottom:6px">${r.icon}</div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${r.color}">${r.val}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:3px">${r.label}</div>
-    </div>`).join('');
+  // ── STATISTIKA: Mean & Modus + Diagram Batang ──
+  renderStatistika(jadwal);
+}
+
+// ─── STATISTIKA ───
+function toMin(s){
+  // handle '15.15' style too
+  const clean = s.replace('.',':');
+  const [h,m] = clean.split(':').map(Number);
+  return h*60+(m||0);
+}
+
+function renderStatistika(jadwal){
+  // Hitung durasi tiap sesi (menit)
+  const withDur = jadwal.map(j=>({...j, dur: Math.max(0, toMin(j.selesai)-toMin(j.mulai))}));
+
+  // Durasi per mapel
+  const durMapel = {};
+  withDur.forEach(j=>{ durMapel[j.mapel]=(durMapel[j.mapel]||0)+j.dur; });
+  const mapelEntries = Object.entries(durMapel).sort((a,b)=>b[1]-a[1]);
+  const totalDur = mapelEntries.reduce((s,[,v])=>s+v,0);
+  const n = mapelEntries.length;
+
+  // MEAN durasi per mapel
+  const mean = totalDur/n;
+
+  // Durasi per hari
+  const durHari = {};
+  withDur.forEach(j=>{ durHari[j.hari]=(durHari[j.hari]||0)+j.dur; });
+  const hariEntries = ['Senin','Selasa','Rabu','Kamis','Jumat']
+    .filter(h=>durHari[h])
+    .map(h=>([h, durHari[h]]));
+
+  // MODUS hari = hari dengan durasi terbanyak
+  const maxHariDur = Math.max(...hariEntries.map(([,v])=>v));
+  const modusHari  = hariEntries.filter(([,v])=>v===maxHariDur).map(([h])=>h).join(' & ');
+
+  // MODUS mapel = mapel dengan durasi terbanyak
+  const maxMapelDur = mapelEntries[0][1];
+  const modusMapel  = mapelEntries.filter(([,v])=>v===maxMapelDur).map(([m])=>m).join(' & ');
+
+  const fmtJam = m => {
+    const j = Math.floor(m/60), mn = m%60;
+    return j ? `${j}j ${mn}m` : `${mn}m`;
+  };
+
+  // Warna bar per mapel
+  const COLORS = ['#4f8ef7','#22d3a0','#a78bfa','#fbbf24','#f87171','#06b6d4','#ec4899','#84cc16','#f97316','#6b7280','#14b8a6','#e879f9'];
+
+  const maxDur = mapelEntries[0][1];
+  const maxHDur = Math.max(...hariEntries.map(([,v])=>v));
+
+  document.getElementById('stat-ringkasan').innerHTML = `
+    <!-- Ringkasan mean & modus -->
+    <div class="stat-sum-row">
+      <div class="stat-sum-card">
+        <div class="stat-sum-label">Mean Durasi/Hari</div>
+        <div class="stat-sum-val" style="color:var(--green)">${fmtJam(Math.round(totalDur/hariEntries.length))}</div>
+        <div class="stat-sum-formula">x̄ = ${totalDur} ÷ ${hariEntries.length}</div>
+      </div>
+      <div class="stat-sum-card">
+        <div class="stat-sum-label">Modus Mapel</div>
+        <div class="stat-sum-val modus-val" style="color:var(--yellow)">${modusMapel}</div>
+        <div class="stat-sum-formula">${fmtJam(maxMapelDur)} terbanyak</div>
+      </div>
+      <div class="stat-sum-card">
+        <div class="stat-sum-label">Modus Hari</div>
+        <div class="stat-sum-val modus-val" style="color:var(--purple)">${modusHari}</div>
+        <div class="stat-sum-formula">${fmtJam(maxHariDur)} terbanyak</div>
+      </div>
+    </div>
+
+    <!-- Diagram batang mapel -->
+    <div class="chart-section">
+      <div class="chart-title">Distribusi Durasi per Mata Pelajaran <span class="chart-sub">(menit/minggu)</span></div>
+      <div class="chart-bars">
+        ${mapelEntries.map(([mapel, dur], i)=>{
+          const pct = (dur/maxDur*100).toFixed(1);
+          const isModus = dur===maxMapelDur;
+          const color = COLORS[i%COLORS.length];
+          return `
+          <div class="bar-row">
+            <div class="bar-label" title="${mapel}">${mapel}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${pct}%;background:${color}${isModus?';box-shadow:0 0 8px '+color+'88':''}" data-w="${pct}"></div>
+            </div>
+            <div class="bar-meta">
+              <span class="bar-val">${fmtJam(dur)}</span>
+              ${isModus?'<span class="bar-modus">Mo</span>':''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Diagram batang hari -->
+    <div class="chart-section">
+      <div class="chart-title">Distribusi Durasi per Hari <span class="chart-sub">(menit/hari)</span></div>
+      <div class="chart-bars">
+        ${hariEntries.map(([hari, dur])=>{
+          const pct = (dur/maxHDur*100).toFixed(1);
+          const isModus = dur===maxHariDur;
+          return `
+          <div class="bar-row">
+            <div class="bar-label">${hari}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${pct}%;background:${isModus?'var(--purple)':'var(--accent)'}${isModus?';box-shadow:0 0 8px rgba(167,139,250,.5)':''}" data-w="${pct}"></div>
+            </div>
+            <div class="bar-meta">
+              <span class="bar-val">${fmtJam(dur)}</span>
+              ${isModus?'<span class="bar-modus" style="background:rgba(167,139,250,.15);color:var(--purple);border-color:rgba(167,139,250,.3)">Mo</span>':''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // Animasi bar
+  setTimeout(()=>{
+    document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 50);
 }
 
 // ─── JADWAL ───
